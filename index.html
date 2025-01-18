@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador Optimizado</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #181818;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        #searchBar {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #444;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background-color: #2a2a2a;
+            color: #ffffff;
+        }
+
+        #searchBar:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        #suggestions {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .suggestion-item:hover,
+        .suggestion-item.active {
+            background-color: #444;
+        }
+
+        #searchResults {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #00ff00;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Buscador CF RJO</h1>
+    <input 
+        type="text" 
+        id="searchBar" 
+        placeholder="Digite um bairro ou cidade" 
+        aria-label="Campo de busca">
+    <div id="suggestions" role="listbox"></div>
+    <div id="searchResults"></div>
+</div>
+
+<script>
+    const dados = [
+['Abolição','Norte 2 - NO2'],
+['Acari','Norte 1 - NO1'],
+['Água Santa ','Norte 2 - NO2'],
+['Alto da Boa Vista','Centro Sul - CZS'],
+['Anchieta','Norte 2 - NO2'],
+['Andaraí','Norte 3 - NO3'],
+['Angra dos Reis','Sul Fluminense - SUF'],
+['Anil  ','Sul 2 - SU2'],
+['Aperibé','Norte Fluminense - NOF'],
+['Araruama','Lagos - LGS'],
+['Areal','Serrana - SEF'],
+['Armação dos Búzios','Lagos - LGS'],
+['Arraial do Cabo','Sul Fluminense - SUF'],
+['Bancários','Norte 1 - NO1'],
+['Bangu','Oeste - OE1'],
+['Barra da Tijuca','Sul 2 - SU2'],
+['Barra de Guaratiba','Oeste - OE1'],
+['Barra do Piraí','Sul Fluminense - SUF'],
+['Barra Mansa','Sul Fluminense - SUF'],
+['Barros Filho','Norte 2 - NO2'],
+['Belford Roxo','Baixada Fluminense - BX1'],
+['Benfica','Norte 3 - NO3'],
+['Bento Ribeiro','Norte 2 - NO2'],
+['Bom Jardim','Serrana - SEF'],
+['Bom Jesus do Itabapoana','Norte Fluminense - NOF'],
+['Bonsucesso','Norte 2 - NO2'],
+['Botafogo','Centro Sul - CZS'],
+['Brás de Pina','Norte 1 - NO1'],
+['Cabo Frio','Lagos - LGS'],
+['Cachambi ','Norte 2 - NO2'],
+['Cachoeiras de Macacu','Serrana - SEF'],
+['Cacuia','Norte 1 - NO1'],
+['Caju Catumbi','Norte 3 - NO3'],
+['Cambuci','Sul Fluminense - SUF'],
+['Camorim','Sul 2 - SU2'],
+['Campinho','Norte 2 - NO2'],
+['Campo Grande','Oeste - OE1'],
+['Campos dos Goytacazes','Norte Fluminense - NOF'],
+['Cantagalo','Serrana - SEF'],
+['Carapebus','Norte Fluminense - NOF'],
+['Cardoso Moreira','Norte Fluminense - NOF'],
+['Carmo','Serrana - SEF'],
+['Cascadura ','Norte 2 - NO2'],
+['Casimiro de Abreu','Lagos - LGS'],
+['Catete','Centro Sul - CZS'],
+['Cavalcante ','Norte 2 - NO2'],
+['Centro','Centro Sul - CZS'],
+['Cidade de Deus ','Sul 2 - SU2'],
+['Cidade Nova ','Centro Sul - CZS'],
+['Cidade Universitária','Norte 1 - NO1'],
+['Cocotá','Norte 1 - NO1'],
+['Coelho Neto','Norte 2 - NO2'],
+['Colégio','Norte 2 - NO2'],
+['Comendador Levy Gasparian','Serrana - SEF'],
+['Conceição de Macabu','Norte Fluminense - NOF'],
+['Copacabana','Centro Sul - CZS'],
+['Cordeiro','Serrana - SEF'],
+['Cordovil','Norte 1 - NO1'],
+['Cosme Velho','Centro Sul - CZS'],
+['Cosmos','Oeste - OE1'],
+['Costa Barros','Norte 2 - NO2'],
+['Curicica ','Sul 2 - SU2'],
+['Del Castilho ','Norte 2 - NO2'],
+['Deodoro','Norte 2 - NO2'],
+['Duas Barras','Serrana - SEF'],
+['Duque de Caxias','Baixada Fluminense - BX1'],
+['Encantado','Norte 2 - NO2'],
+['Engenheiro Leal','Norte 2 - NO2'],
+['Engenheiro Paulo de Frontin','Sul Fluminense - SUF'],
+['Engenho da Rainha','Norte 1 - NO1'],
+['Engenho de Dentro','Norte 2 - NO2'],
+['Engenho Novo','Norte 2 - NO2'],
+['Estácio ','Centro Sul - CZS'],
+['Flamengo','Centro Sul - CZS'],
+['Freguesia/Ilha','Norte 1 - NO1'],
+['Freguesia/Jacarepagua','Sul 2 - SU2'],
+['Galeão','Norte 1 - NO1'],
+['Gamboa ','Centro Sul - CZS'],
+['Gardênia Azul','Sul 2 - SU2'],
+['Gávea ','Centro Sul - CZS'],
+['Gericinó','Oeste - OE1'],
+['Glória ','Centro Sul - CZS'],
+['Grajaú','Norte 3 - NO3'],
+['Grumari','Sul 2 - SU2'],
+['Guadalupe','Norte 2 - NO2'],
+['Guapimirim','Metropolitana - MTP'],
+['Guaratiba ','Oeste - OE1'],
+['Higienópolis','Norte 1 - NO1'],
+['Honório Gurgel','Norte 2 - NO2'],
+['Humaitá ','Centro Sul - CZS'],
+['Iguaba Grande','Lagos - LGS'],
+['Ilha do Governador','Norte 1 - NO1'],
+['Inhaúma','Norte 1 - NO1'],
+['Inhoaíba','Oeste - OE1'],
+['Ipanema','Centro Sul - CZS'],
+['Irajá','Norte 1 - NO1'],
+['Itaboraí','Metropolitana - MTP'],
+['Itaguaí','Sul Fluminense - SUF'],
+['Italva','Norte Fluminense - NOF'],
+['Itanhangá ','Sul 2 - SU2'],
+['Itaocara','Norte Fluminense - NOF'],
+['Itaperuna','Norte Fluminense - NOF'],
+['Itatiaia','Sul Fluminense - SUF'],
+['Jacaré','Norte 2 - NO2'],
+['Jacarepaguá','Sul 2 - SU2'],
+['Jacarezinho ','Norte 2 - NO2'],
+['Japeri','Baixada Fluminense - BX1'],
+['Jardim América','Norte 1 - NO1'],
+['Jardim Botânico','Centro Sul - CZS'],
+['Jardim Carioca','Norte 1 - NO1'],
+['Jardim Guanabara','Norte 1 - NO1'],
+['Jardim Sulacap','Oeste - OE1'],
+['Lagoa','Centro Sul - CZS'],
+['Laje do Muriaé','Norte Fluminense - NOF'],
+['Lapa ','Centro Sul - CZS'],
+['Laranjeiras ','Centro Sul - CZS'],
+['Leblon','Centro Sul - CZS'],
+['Leme','Centro Sul - CZS'],
+['Lins de Vasconcelos','Norte 2 - NO2'],
+['Macaé','Norte Fluminense - NOF'],
+['Macuco','Serrana - SEF'],
+['Madureira','Norte 2 - NO2'],
+['Magalhães Bastos','Oeste - OE1'],
+['Magé','Metropolitana - MTP'],
+['Mangaratiba','Sul Fluminense - SUF'],
+['Mangueira ','Centro Sul - CZS'],
+['Manguinhos','Norte 1 - NO1'],
+['Maracanã ','Norte 3 - NO3'],
+['Maré','Norte 1 - NO1'],
+['Marechal Hermes','Norte 2 - NO2'],
+['Maria da Graça','Norte 2 - NO2'],
+['Maricá','Metropolitana - MTP'],
+['Méier','Norte 2 - NO2'],
+['Mendes','Sul Fluminense - SUF'],
+['Mesquita','Baixada Fluminense - BX1'],
+['Miguel Pereira','Serrana - SEF'],
+['Miracema','Norte Fluminense - NOF'],
+['Moneró','Norte 1 - NO1'],
+['Natividade','Norte Fluminense - NOF'],
+['Nilópolis','Baixada Fluminense - BX1'],
+['Niterói','Metropolitana - MTP'],
+['Nova Friburgo','Serrana - SEF'],
+['Nova Iguaçu','Baixada Fluminense - BX1'],
+['Olaria','Norte 1 - NO1'],
+['Oswaldo Cruz','Norte 2 - NO2'],
+['Paciência','Oeste - OE1'],
+['Padre Miguel','Oeste - OE1'],
+['Paquetá','Centro Sul - CZS'],
+['Parada de Lucas','Norte 1 - NO1'],
+['Paraíba do Sul','Serrana - SEF'],
+['Paraty','Sul Fluminense - SUF'],
+['Parque Anchieta','Norte 2 - NO2'],
+['Parque Colúmbia','Norte 2 - NO2'],
+['Paty do Alferes','Serrana - SEF'],
+['Pavuna ','Norte 2 - NO2'],
+['Pechincha','Sul 2 - SU2'],
+['Pedra de Guaratiba ','Oeste - OE1'],
+['Penha','Norte 1 - NO1'],
+['Penha Circular','Norte 1 - NO1'],
+['Petrópolis','Serrana - SEF'],
+['Piedade','Norte 2 - NO2'],
+['Pilares','Norte 2 - NO2'],
+['Pinheiral','Sul Fluminense - SUF'],
+['Piraí','Sul Fluminense - SUF'],
+['Pitangueiras','Norte 1 - NO1'],
+['Porciúncula','Norte Fluminense - NOF'],
+['Porto Real','Sul Fluminense - SUF'],
+['Portuguesa','Norte 1 - NO1'],
+['Praça da Bandeira','Centro Sul - CZS'],
+['Praça Seca','Norte 2 - NO2'],
+['Praia da Bandeira ','Norte 1 - NO1'],
+['Quatis','Sul Fluminense - SUF'],
+['Queimados','Baixada Fluminense - BX1'],
+['Quintino Bocaiuva','Norte 2 - NO2'],
+['Quissamã','Norte Fluminense - NOF'],
+['Ramos','Norte 1 - NO1'],
+['Realengo','Oeste - OE1'],
+['Recreio dos Bandeirantes','Sul 2 - SU2'],
+['Resende','Sul Fluminense - SUF'],
+['Riachuelo','Norte 2 - NO2'],
+['Ribeira','Norte 1 - NO1'],
+['Ricardo de Albuquerque','Norte 2 - NO2'],
+['Rio Bonito','Metropolitana - MTP'],
+['Rio Claro','Sul Fluminense - SUF'],
+['Rio Comprido','Centro Sul - CZS'],
+['Rio das Flores','Serrana - SEF'],
+['Rio das Ostras','Lagos - LGS'],
+['Rocha','Centro Sul - CZS'],
+['Rocha Miranda','Norte 2 - NO2'],
+['Rocinha','Sul 2 - SU2'],
+['Sampaio','Centro Sul - CZS'],
+['Santa Cruz ','Oeste - OE1'],
+['Santa Maria Madalena','Serrana - SEF'],
+['Santa Teresa ','Centro Sul - CZS'],
+['Santíssimo','Oeste - OE1'],
+['Santo Antônio de Pádua','Norte Fluminense - NOF'],
+['Santo Cristo','Centro Sul - CZS'],
+['São Conrado','Sul 2 - SU2'],
+['São Cristóvão','Norte 3 - NO3'],
+['São Fidélis','Norte Fluminense - NOF'],
+['São Francisco de Itabapoana','Norte Fluminense - NOF'],
+['São Francisco Xavier','Centro Sul - CZS'],
+['São Gonçalo','Metropolitana - MTP'],
+['São João da Barra','Norte Fluminense - NOF'],
+['São João de Meriti','Baixada Fluminense - BX1'],
+['São José de Ubá','Norte Fluminense - NOF'],
+['São José do Vale do Rio Preto','Serrana - SEF'],
+['São Pedro da Aldeia','Lagos - LGS'],
+['Sapucaia','Serrana - SEF'],
+['Saquarema','Lagos - LGS'],
+['Saúde ','Centro Sul - CZS'],
+['Senador Camará ','Oeste - OE1'],
+['Senador Vasconcelos','Oeste - OE1'],
+['Sepetiba','Oeste - OE1'],
+['Seropédica','Baixada Fluminense - BX1'],
+['Sumidouro','Serrana - SEF'],
+['Tanguá','Metropolitana - MTP'],
+['Tanque','Sul 2 - SU2'],
+['Taquara ','Sul 2 - SU2'],
+['Tauá ','Norte 1 - NO1'],
+['Teresópolis','Serrana - SEF'],
+['Tijuca ','Norte 3 - NO3'],
+['Todos os Santos','Norte 2 - NO2'],
+['Tomás Coelho','Norte 2 - NO2'],
+['Trajano de Moraes','Serrana - SEF'],
+['Três Rios','Serrana - SEF'],
+['Turiaçu','Norte 2 - NO2'],
+['Urca ','Centro Sul - CZS'],
+['Vargem Grande','Sul 2 - SU2'],
+['Vargem Pequena','Sul 2 - SU2'],
+['Varre-Sai','Norte Fluminense - NOF'],
+['Vasco da Gama','Centro Sul - CZS'],
+['Vassouras','Sul Fluminense - SUF'],
+['Vaz Lobo','Norte 2 - NO2'],
+['Vicente de Carvalho','Norte 1 - NO1'],
+['Vidigal','Centro Sul - CZS'],
+['Vigário Geral','Norte 1 - NO1'],
+['Vila da Penha','Norte 1 - NO1'],
+['Vila Isabel','Sul Fluminense - SUF'],
+['Vila Kosmos','Norte 1 - NO1'],
+['Vila Militar','Norte 2 - NO2'],
+['Vila Valqueire','Norte 2 - NO2'],
+['Vista Alegre','Norte 1 - NO1'],
+['Volta Redonda','Sul Fluminense - SUF'],
+['Zumbi','Norte 1 - NO1'],
+    ];
+
+    const searchBar = document.getElementById("searchBar");
+    const suggestions = document.getElementById("suggestions");
+    const searchResults = document.getElementById("searchResults");
+
+    let activeIndex = -1;
+
+    function search(termo) {
+        const resultado = dados.find(([chave]) => chave.toLowerCase() === termo.toLowerCase());
+        if (resultado) {
+            searchResults.innerHTML = `<strong>${resultado[0]}:</strong> ${resultado[1]}`;
+        } else {
+            searchResults.innerHTML = "Nenhum resultado encontrado.";
+        }
+        suggestions.style.display = 'none';
+    }
+
+    function updateSuggestions(termo) {
+        const sugestoes = dados.filter(([chave]) => chave.toLowerCase().startsWith(termo.toLowerCase()));
+        if (sugestoes.length) {
+            suggestions.innerHTML = sugestoes
+                .map(([chave], index) => `<div class="suggestion-item" data-index="${index}">${chave}</div>`)
+                .join('');
+            suggestions.style.display = 'block';
+            activeIndex = -1; // Reset active suggestion
+        } else {
+            suggestions.style.display = 'none';
+        }
+    }
+
+    function handleKeyboardNavigation(event) {
+        const items = document.querySelectorAll('.suggestion-item');
+        if (!items.length) return;
+
+        if (event.key === 'ArrowDown') {
+            activeIndex = (activeIndex + 1) % items.length;
+            updateActiveSuggestion(items);
+        } else if (event.key === 'ArrowUp') {
+            activeIndex = (activeIndex - 1 + items.length) % items.length;
+            updateActiveSuggestion(items);
+        } else if (event.key === 'Enter') {
+            if (activeIndex >= 0) {
+                searchBar.value = items[activeIndex].textContent;
+                search(searchBar.value);
+            } else {
+                search(searchBar.value);
+            }
+        }
+    }
+
+    function updateActiveSuggestion(items) {
+        items.forEach(item => item.classList.remove('active'));
+        if (activeIndex >= 0) {
+            items[activeIndex].classList.add('active');
+        }
+    }
+
+    searchBar.addEventListener("input", (event) => {
+        const termo = event.target.value;
+        updateSuggestions(termo);
+        searchResults.textContent = ''; // Limpa resultados ao digitar
+    });
+
+    searchBar.addEventListener("keydown", handleKeyboardNavigation);
+
+    suggestions.addEventListener("click", (event) => {
+        if (event.target.classList.contains('suggestion-item')) {
+            searchBar.value = event.target.textContent;
+            search(searchBar.value);
+        }
+    });
+</script>
+</body>
+</html>
